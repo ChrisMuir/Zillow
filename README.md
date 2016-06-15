@@ -15,7 +15,7 @@ Then run `zillow(driver, "search_terms")` to execute the scraper.
 Some things to keep in mind:
 ---------------------------
 1. You will need to edit line 13 of the code to point to the local location of the web driver (required by Selenium). Function `init_driver()` is written for use with    chromedriver.
-2. The output of each call to `Zillow` is capped at 520 home listings.
+2. The output of each call to `zillow()` is capped at 520 home listings.
 3. There tends to be a small amount of NA's on every search, however foreclosure properties seem to be more likely to throw NA's. So the more foreclosures there are in a search, the more NA's there will be.
 4. Code seems to work best with zipcode as the search terms input.
 
