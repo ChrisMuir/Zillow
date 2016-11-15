@@ -16,8 +16,8 @@ def init_driver():
     driver.wait = WebDriverWait(driver, 10)
     return driver
 
-def navigate_to_zillow(driver):
-    driver.get("http://www.zillow.com/homes")
+def navigate_to_website(driver, site):
+    driver.get(site)
 
 def click_buy_button(driver):
     try:
@@ -29,19 +29,29 @@ def click_buy_button(driver):
         raise ValueError("Clicking the 'Buy' button failed")
 
 def enter_search_term(driver, search_term):
-    click_buy_button(driver)
     try:
         searchBar = driver.wait.until(EC.presence_of_element_located(
             (By.ID, "citystatezip")))
         button = driver.wait.until(EC.element_to_be_clickable(
             (By.CLASS_NAME, "zsg-icon-searchglass")))
+        searchBar.clear()
+        time.sleep(3)
         searchBar.send_keys(search_term)
-        time.sleep(5)
+        time.sleep(3)
         button.click()
         time.sleep(10)
     except (TimeoutException, NoSuchElementException):
         raise ValueError("Entering of search terms failed")
-        
+    results_test(driver, search_term)
+    
+def results_test(driver, search_term):
+    try:
+        no_results = driver.find_element_by_css_selector('.zoom-out-message').is_displayed()
+    except NoSuchElementException:
+        no_results = False
+    if no_results:
+        raise ValueError("Search " + str(search_term) + " returned zero results from Zillow. Please try another search.")
+
 def get_html(driver):
     output = []
     keep_going = True
@@ -207,7 +217,7 @@ def get_days_on_market(str_obj):
 def get_sale_type(str_obj):
     types = ['House For Sale', 'Condo For Sale', 'Foreclosure', 
     'New Construction', 'Townhouse For Sale', 'Apartment For Sale', 
-    'Make Me Move', 'For Sale by Owner', 'Lot/Land For Sale']
+    'Make Me Move', 'For Sale by Owner', 'Lot/Land For Sale', 'Co-op For Sale']
     saletype = 'NA'
     for i in range(len(types)):
         if types[i] in str_obj:
@@ -227,4 +237,3 @@ def get_url(str_obj):
         url3 = '_zpid/any_days/globalrelevanceex_sort/29.759534,-95.335321,29.675003,-95.502863_rect/12_zm/'
         url = url1 + homeID + url3
     return(url)
-

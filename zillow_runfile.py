@@ -3,19 +3,23 @@ import pandas as pd
 import zillow_functions as zl
 
 # Define search term (must be str object).
-search_term = '77005'
+search_term = '11201'
 
 # Initialize the webdriver.
 driver = zl.init_driver()
 
 # Go to www.zillow.com/homes
-zl.navigate_to_zillow(driver)
+zl.navigate_to_website(driver, "http://www.zillow.com/homes")
 
 # Click the "buy" button.
 zl.click_buy_button(driver)
 
 # Enter search term and execute search.
 zl.enter_search_term(driver, search_term)
+
+# Check to see if any results were returned from the search.
+# If there were none, an error will be raised.
+zl.results_test(driver, search_term)
 
 # Pull the html for each page of search results. Zillow caps results at 
 # 20 pages, each page can contain 26 home listings, thus the cap on home 
