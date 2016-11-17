@@ -1,8 +1,9 @@
 """
-Zillow scraper functions
+Zillow scraper functions, these are sourced at the top of zillow_runfile.py
 """
 
 import time
+import zipcode
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -10,11 +11,20 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 from selenium.common.exceptions import NoSuchElementException
 
+def zipcodes_list(st_items):
+    zcObjects = []
+    for i in st_items:
+        zcObjects = zcObjects + zipcode.islike(i)
+    output = []
+    for i in zcObjects:
+        output.append(str(i).split(" ", 1)[1].split(">")[0])
+    return(output)
+
 def init_driver():
     path_to_chromedriver = 'C:/Users/username/My Documents/chromedriver'
     driver = webdriver.Chrome(executable_path = path_to_chromedriver)
     driver.wait = WebDriverWait(driver, 10)
-    return driver
+    return(driver)
 
 def navigate_to_website(driver, site):
     driver.get(site)
@@ -28,7 +38,9 @@ def click_buy_button(driver):
     except (TimeoutException, NoSuchElementException):
         raise ValueError("Clicking the 'Buy' button failed")
 
-def enter_search_term(driver, search_term):
+def enter_search_term(driver, search_term, k, numSearchTerms):
+    print("Entering searchterm number " + str(k+1) + 
+          " out of " + str(numSearchTerms))
     try:
         searchBar = driver.wait.until(EC.presence_of_element_located(
             (By.ID, "citystatezip")))
@@ -39,18 +51,18 @@ def enter_search_term(driver, search_term):
         searchBar.send_keys(search_term)
         time.sleep(3)
         button.click()
-        time.sleep(10)
     except (TimeoutException, NoSuchElementException):
         raise ValueError("Entering of search terms failed")
-    results_test(driver, search_term)
-    
+        
 def results_test(driver, search_term):
     try:
         no_results = driver.find_element_by_css_selector('.zoom-out-message').is_displayed()
     except NoSuchElementException:
         no_results = False
     if no_results:
-        raise ValueError("Search " + str(search_term) + " returned zero results from Zillow. Please try another search.")
+        print("Search " + str(search_term) + 
+              " returned zero results. Moving onto the next search")
+    return(no_results)
 
 def get_html(driver):
     output = []
@@ -71,9 +83,6 @@ def get_html(driver):
             print(str(len(output)) + " pages of listings found")
     return(output)
 
-def close_connection(driver):
-    driver.quit()
-
 def get_listings(list_obj):
     # Split the HTML within rawdata into segments, one for each house listing.
     # First, find out how many listings the search result returned:
@@ -88,8 +97,8 @@ def get_listings(list_obj):
         output += htmlSplit
     # Third, check to make sure the segmentation caught all the listings:
     if numListings != len(output):
-        print("Warning: output will only contain info on " + str(len(output)) + 
-        " homes")
+        print("Warning: output will only contain info on " + 
+              str(len(output)) + " homes")
     return(output)
 
 def get_street_address(str_obj):
@@ -234,6 +243,10 @@ def get_url(str_obj):
         homeID = 'NA'
     if len(homeID) < 13 and homeID != 'NA':
         url1 = 'http://www.zillow.com/homes/for_sale/'
-        url3 = '_zpid/any_days/globalrelevanceex_sort/29.759534,-95.335321,29.675003,-95.502863_rect/12_zm/'
-        url = url1 + homeID + url3
+        url3 = '_zpid/any_days/globalrelevanceex_sort/29.759534,-95.335321,' 
+        url4 = '29.675003,-95.502863_rect/12_zm/'
+        url = url1 + homeID + url3 + url4
     return(url)
+
+def close_connection(driver):
+    driver.quit()

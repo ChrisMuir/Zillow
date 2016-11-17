@@ -8,12 +8,15 @@ Basic tool for scraping current home listings from Zillow, written in Python usi
 
 There are two files, `zillow_runfile.py` and `zillow_functions.py`. Save them both to your working directory, open the runfile and step through the code line-by-line. The zillow functions are sourced at the top of the runfile.
 
+This tool uses a for loop to iterate over a list of input search terms, scrape the listings of each, and append the results to a dataframe. Any search terms can be used, however zip codes seem to work best. Function `zipcodes_list()` allows the user to compile a large list of zip codes to use as search terms, using the package `zipcode`. 
+For example, `zc = zipcodes_list(['10', '11', '606'])` will yield every US zip code that begins with '10', begins with '11', or begins with '606' as a single list. Object `zc` could then be passed to the scraper for loop. 
+The scraper tends to run at a pace of about 100 zip codes per hour, and this seems to fly below the radar of Zillows anti-scraping TOC rules. 
+
 Some things to keep in mind:
 ---------------------------
-1. You will need to edit line 14 within `zillow_functions.py` to point to the local path of the web driver program (required by Selenium).
+1. You will need to edit line 24 within `zillow_functions.py` to point to the local path of the web driver program (required by Selenium).
 2. The max return for each search term executed is 520 home listings.
 3. There tends to be a small amount of NA's on every search, however foreclosure properties seem to be more likely to return NA's. So the more foreclosures there are in a search, the more NA's there will be.
-4. The best results seem to come from using zipcode as the search term input.
 
 Software Requirements/Info
 ---------------------
