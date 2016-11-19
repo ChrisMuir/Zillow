@@ -9,7 +9,7 @@ and then writes the df to a CSV file that gets saved to your working directory.
 A for loop is used to scrape a list of search terms in a single session. 
 The max return for each search term executed is 520 home listings.
 Using zip codes as the search terms seems to yield the best results. 
-The scraper tends to run at a pace of about 100 zip codes per hour, 
+The scraper tends to run at a pace of about 75 zip codes per hour, 
 and this seems to fly below the radar of Zillows anti-scraping TOC rules.
 
 Software requirements/info:
@@ -24,7 +24,7 @@ Software requirements/info:
 
 import time
 import pandas as pd
-import zillow_functions_loop as zl
+import zillow_functions as zl
 
 # Create list of search terms.
 # Use function zipcodes_list() to create a list of US zip codes that will be 
@@ -42,7 +42,7 @@ import zillow_functions_loop as zl
 st = zl.zipcodes_list(st_items = ['10', '11', '606'])
 
 # Initialize the webdriver.
-driver = zl.init_driver()
+driver = zl.init_driver('C:/Users/username/My Documents/chromedriver')
 
 # Go to www.zillow.com/homes
 zl.navigate_to_website(driver, "http://www.zillow.com/homes")

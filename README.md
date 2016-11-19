@@ -4,25 +4,43 @@ Zillow Scraping with Python
 WARNING: Use this code at your own risk, scraping is against Zillow's TOC.
 -------------------------------------------------------------------------
 
-Basic tool for scraping current home listings from Zillow, written in Python using Selenium.  The code takes as input search terms that would normally be entered on the Zillow home page.  It creates 11 variables on each home listing from the data, saves them to a data frame, and then writes the df to a CSV file that gets saved to your working directory.
+Basic tool for scraping current home listings from Zillow, written in Python 
+using Selenium.  The code takes as input search terms that would normally be 
+entered on the Zillow home page.  It creates 11 variables on each home listing 
+from the data, saves them to a data frame, and then writes the df to a CSV file 
+that gets saved to your working directory. Using zip codes as search terms 
+seems to yield the best results, the scraper works at a rate of about 75 
+zip codes per hour (compared to the Zillow API limit of 1000 homes per 24h).
 
-There are two files, `zillow_runfile.py` and `zillow_functions.py`. Save them both to your working directory, open the runfile and step through the code line-by-line. The zillow functions are sourced at the top of the runfile.
+There are two files, `zillow_runfile.py` and `zillow_functions.py`. Save them 
+both to your working directory, open the runfile and step through the code 
+line-by-line. The zillow functions are sourced at the top of the runfile.
 
-This tool uses a for loop to iterate over a list of input search terms, scrape the listings of each, and append the results to a dataframe. Any search terms can be used, however zip codes seem to work best. Function `zipcodes_list()` allows the user to compile a large list of zip codes to use as search terms, using the package `zipcode`. 
-For example, `zc = zipcodes_list(['10', '11', '606'])` will yield every US zip code that begins with '10', begins with '11', or begins with '606' as a single list. Object `zc` could then be passed to the scraper for loop. 
-The scraper tends to run at a pace of about 100 zip codes per hour, and this seems to fly below the radar of Zillows anti-scraping TOC rules. 
+This tool uses a for loop to iterate over a list of input search terms, scrape 
+the listings of each, and append the results to a dataframe. Function `zipcodes_list()` 
+allows the user to compile a large list of zip codes to use as search terms, 
+using the package `zipcode`. For example, `st = zipcodes_list(['10', '11', '606'])` 
+will yield every US zip code that begins with '10', '11', or '606' as a single 
+list. Object `st` could then be passed to the scraper for loop. The scraper 
+seems to fly below the radar of Zillows anti-scraping TOC rules. 
 
 Some things to keep in mind:
 ---------------------------
-1. You will need to edit line 24 within `zillow_functions.py` to point to the local path of the web driver program (required by Selenium).
+1. You will need to edit line 24 within `zillow_functions.py` to point to the 
+local path of the web driver program (required by Selenium).
 2. The max return for each search term executed is 520 home listings.
-3. There tends to be a small amount of NA's on every search, however foreclosure properties seem to be more likely to return NA's. So the more foreclosures there are in a search, the more NA's there will be.
+3. There tends to be a small amount of NA's on every search, however foreclosure 
+properties seem to be more likely to return NA's. So the more foreclosures 
+there are in a search, the more NA's there will be.
 
 Software Requirements/Info
 ---------------------
 - This code was written using Python 3.5.
-- Scraping is done with Selenium v3.0.1, which can be downloaded here: http://www.seleniumhq.org/download/
-- The selenium package requires a webdriver program. This code was written using Chromedriver v2.25, which can be downloaded here: https://sites.google.com/a/chromium.org/chromedriver/downloads
+- Scraping is done with Selenium v3.0.1, which can be downloaded here: 
+http://www.seleniumhq.org/download/
+- The selenium package requires a webdriver program. This code was written 
+using Chromedriver v2.25, which can be downloaded here: 
+https://sites.google.com/a/chromium.org/chromedriver/downloads
 
 Example of the output dataframe:
 ------------------------

@@ -20,9 +20,8 @@ def zipcodes_list(st_items):
         output.append(str(i).split(" ", 1)[1].split(">")[0])
     return(output)
 
-def init_driver():
-    path_to_chromedriver = 'C:/Users/username/My Documents/chromedriver'
-    driver = webdriver.Chrome(executable_path = path_to_chromedriver)
+def init_driver(filepath):
+    driver = webdriver.Chrome(executable_path = filepath)
     driver.wait = WebDriverWait(driver, 10)
     return(driver)
 
