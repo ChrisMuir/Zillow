@@ -19,28 +19,27 @@ line-by-line. The zillow functions are sourced at the top of the runfile.
 This tool uses a for loop to iterate over a list of input search terms, scrape 
 the listings of each, and append the results to a dataframe. Function `zipcodes_list()` 
 allows the user to compile a large list of zip codes to use as search terms, 
-using the package `zipcode`. For example, `st = zipcodes_list(['10', '11', '606'])` 
+using the package [zipcode](https://pypi.python.org/pypi/zipcode). For example, 
+`st = zipcodes_list(['10', '11', '606'])` 
 will yield every US zip code that begins with '10', '11', or '606' as a single 
-list. Object `st` could then be passed to the scraper for loop. The scraper 
+list. Object `st` could then be passed to the scraper. The scraper 
 seems to fly below the radar of Zillows anti-scraping TOC rules. 
 
 Some things to keep in mind:
 ---------------------------
 1. You will need to edit line 24 within `zillow_functions.py` to point to the 
 local path of the web driver program (required by Selenium).
-2. The max return for each search term executed is 520 home listings.
+2. The max return for each search term (i.e. each zip code) is 520 home listings.
 3. There tends to be a small amount of NA's on every search, however foreclosure 
 properties seem to be more likely to return NA's. So the more foreclosures 
 there are in a search, the more NA's there will be.
 
 Software Requirements/Info
 ---------------------
-- This code was written using Python 3.5.
-- Scraping is done with Selenium v3.0.1, which can be downloaded here: 
-http://www.seleniumhq.org/download/
+- This code was written using [Python 3.5](https://www.python.org/downloads/).
+- Scraping is done with [Selenium v3.0.1](http://www.seleniumhq.org/download/).
 - The selenium package requires a webdriver program. This code was written 
-using Chromedriver v2.25, which can be downloaded here: 
-https://sites.google.com/a/chromium.org/chromedriver/downloads
+using [Chromedriver v2.25](https://sites.google.com/a/chromium.org/chromedriver/downloads).
 
 Example of the output dataframe:
 ------------------------
