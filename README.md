@@ -23,12 +23,12 @@ using the package [zipcode](https://pypi.python.org/pypi/zipcode). For example,
 `st = zipcodes_list(['10', '11', '606'])` 
 will yield every US zip code that begins with '10', '11', or '606' as a single 
 list. Object `st` could then be passed to the scraper. The scraper 
-seems to fly below the radar of Zillows anti-scraping TOC rules. 
+seems to fly below the radar of Zillows anti-scraping TOC rules.
 
 Some things to keep in mind:
 ---------------------------
-1. You will need to edit line 24 within `zillow_functions.py` to point to the 
-local path of the web driver program (required by Selenium).
+1. You will need to edit the function call param in line 39 within 
+`zillow_runfile.py` to point to the local path of your web driver program (required by Selenium).
 2. The max return for each search term (i.e. each zip code) is 520 home listings.
 3. There tends to be a small amount of NA's on every search, however foreclosure 
 properties seem to be more likely to return NA's. So the more foreclosures 

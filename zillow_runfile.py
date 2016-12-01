@@ -6,12 +6,6 @@ terms that would normally be entered on the Zillow home page.  It creates 11
 variables on each home listing from the data, saves them to a data frame, 
 and then writes the df to a CSV file that gets saved to your working directory.
 
-A for loop is used to scrape a list of search terms in a single session. 
-The max return for each search term executed is 520 home listings.
-Using zip codes as the search terms seems to yield the best results. 
-The scraper tends to run at a pace of about 75 zip codes per hour, 
-and this seems to fly below the radar of Zillows anti-scraping TOC rules.
-
 Software requirements/info:
 - This code was written using Python 3.5.
 - Scraping is done with Selenium v3.0.1, which can be downloaded here: 
@@ -27,7 +21,7 @@ import pandas as pd
 import zillow_functions as zl
 
 # Create list of search terms.
-# Use function zipcodes_list() to create a list of US zip codes that will be 
+# Function zipcodes_list() creates a list of US zip codes that will be 
 # passed to the scraper. For example, st = zipcodes_list(['10', '11', '606'])  
 # will yield every US zip code that begins with '10', begins with "11", or 
 # begins with "606" as a single list.
@@ -42,7 +36,7 @@ import zillow_functions as zl
 st = zl.zipcodes_list(st_items = ['10', '11', '606'])
 
 # Initialize the webdriver.
-driver = zl.init_driver('C:/Users/username/My Documents/chromedriver')
+driver = zl.init_driver('C:/Users/username/Documents/chromedriver')
 
 # Go to www.zillow.com/homes
 zl.navigate_to_website(driver, "http://www.zillow.com/homes")
@@ -92,6 +86,8 @@ for k in range(len(st)):
     # Take the extracted HTML and split it up by individual home listings.
     listings = zl.get_listings(rawdata)
     
+    # For each home listing, extract the 11 variables that will populate that 
+    # specific observation within the output dataframe.
     for n in range(len(listings)):
         # Street address, city, state, and zipcode
         addressSplit, address = zl.get_street_address(listings[n])
