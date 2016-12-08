@@ -20,8 +20,8 @@ This tool uses a for loop to iterate over a list of input search terms, scrape
 the listings of each, and append the results to a dataframe. Function `zipcodes_list()` 
 allows the user to compile a large list of zip codes to use as search terms, 
 using the package [zipcode](https://pypi.python.org/pypi/zipcode). For example, 
-`st = zipcodes_list(['10', '11', '606'])` 
-will yield every US zip code that begins with '10', '11', or '606' as a single 
+`st = zipcodes_list(['10', '11', '770'])` 
+will yield every US zip code that begins with '10', '11', or '770' as a single 
 list. Object `st` could then be passed to the scraper. The scraper 
 seems to fly below the radar of Zillows anti-scraping TOC rules.
 
@@ -38,7 +38,7 @@ Software Requirements/Info
 ---------------------
 - This code was written using [Python 3.5](https://www.python.org/downloads/).
 - Scraping is done with [Selenium v3.0.1](http://www.seleniumhq.org/download/).
-- The selenium package requires a webdriver program. This code was written 
+- The Selenium package requires a webdriver program. This code was written 
 using [Chromedriver v2.25](https://sites.google.com/a/chromium.org/chromedriver/downloads).
 
 Example of the output dataframe:

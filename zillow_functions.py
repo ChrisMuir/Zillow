@@ -12,12 +12,20 @@ from selenium.common.exceptions import TimeoutException
 from selenium.common.exceptions import NoSuchElementException
 
 def zipcodes_list(st_items):
-    zcObjects = []
-    for i in st_items:
-        zcObjects = zcObjects + zipcode.islike(i)
-    output = []
-    for i in zcObjects:
-        output.append(str(i).split(" ", 1)[1].split(">")[0])
+    if type(st_items) == str:
+        zcObjects = zipcode.islike(st_items)
+        output = []
+        for i in zcObjects:
+            output.append(str(i).split(" ", 1)[1].split(">")[0])
+    elif type(st_items) == list:
+        zcObjects = []
+        for i in st_items:
+            zcObjects = zcObjects + zipcode.islike(i)
+        output = []
+        for i in zcObjects:
+            output.append(str(i).split(" ", 1)[1].split(">")[0])
+    else:
+        raise ValueError("input 'st_items' must be of type str or list")
     return(output)
 
 def init_driver(filepath):
@@ -38,8 +46,6 @@ def click_buy_button(driver):
         raise ValueError("Clicking the 'Buy' button failed")
 
 def enter_search_term(driver, search_term, k, numSearchTerms):
-    print("Entering searchterm number " + str(k+1) + 
-          " out of " + str(numSearchTerms))
     try:
         searchBar = driver.wait.until(EC.presence_of_element_located(
             (By.ID, "citystatezip")))
@@ -50,54 +56,79 @@ def enter_search_term(driver, search_term, k, numSearchTerms):
         searchBar.send_keys(search_term)
         time.sleep(3)
         button.click()
+        time.sleep(3)
+        return(True)
     except (TimeoutException, NoSuchElementException):
-        raise ValueError("Entering of search terms failed")
-        
+        return(False)
+
 def results_test(driver, search_term):
     try:
-        no_results = driver.find_element_by_css_selector('.zoom-out-message').is_displayed()
+        no_results = driver.find_element_by_css_selector(
+            '.zoom-out-message').is_displayed()
     except NoSuchElementException:
         no_results = False
-    if no_results:
-        print("Search " + str(search_term) + 
-              " returned zero results. Moving onto the next search")
-    return(no_results)
+    return(no_results)        
 
 def get_html(driver):
     output = []
     keep_going = True
     while keep_going:
+        # Pull page HTML
         output.append(driver.page_source)
         try:
+            # Check to see if a "next page" link exists
             keep_going = driver.find_element_by_class_name(
                 'zsg-pagination-next').is_displayed()
         except NoSuchElementException:
             keep_going = False
         if keep_going:
-            button = driver.wait.until(EC.element_to_be_clickable(
-                (By.CLASS_NAME, 'zsg-pagination-next')))
-            button.click()
-            time.sleep(5)
-        else:
-            print(str(len(output)) + " pages of listings found")
+            # Test to ensure the "updating results" image isnt displayed.
+            tries = 5
+            try:
+                cover = driver.find_element_by_class_name(
+                    'list-loading-message-cover').is_displayed()
+            except (TimeoutException, NoSuchElementException):
+                cover = False
+            while cover and tries > 0:
+                time.sleep(5)
+                tries -= 1
+                try:
+                    cover = driver.find_element_by_class_name(
+                        'list-loading-message-cover').is_displayed()
+                except (TimeoutException, NoSuchElementException):
+                    cover = False
+            # If 'cover' is False, click next page. If its True, give up on 
+            # trying to click thru to the next page of house results.
+            if cover == False:
+                try:
+                    driver.wait.until(EC.element_to_be_clickable(
+                        (By.CLASS_NAME, 'zsg-pagination-next'))).click()
+                    time.sleep(3)
+                except TimeoutException:
+                    keep_going = False
+            else:
+                keep_going = False
+        #else:
+            #print(str(len(output)) + " pages of listings found")
     return(output)
 
 def get_listings(list_obj):
     # Split the HTML within rawdata into segments, one for each house listing.
-    # First, find out how many listings the search result returned:
-    firstPages = (len(list_obj)-1)*26
-    lastPage = list_obj[len(list_obj)-1].split('" id="zpid_')
-    numListings = firstPages + (len(lastPage)-1)
+    # Find out how many listings the search result returned:
+    firstPages = (len(list_obj) - 1) * 26
+    lastPage = list_obj[len(list_obj) - 1].split('" id="zpid_')
+    numListings = firstPages + (len(lastPage) - 1)
     print(str(numListings)+" home listings scraped")
-    # Second, split the raw HTML into segments, one for each listing:
+    # Split the raw HTML into segments, one for each listing:
     output = []
     for i in list_obj:
         htmlSplit = i.split('" id="zpid_')[1:]
         output += htmlSplit
-    # Third, check to make sure the segmentation caught all the listings:
+    # Check to make sure the segmentation caught all the listings:
     if numListings != len(output):
         print("Warning: output will only contain info on " + 
               str(len(output)) + " homes")
+    print("***")
     return(output)
 
 def get_street_address(str_obj):

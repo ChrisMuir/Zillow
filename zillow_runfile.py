@@ -33,10 +33,10 @@ import zillow_functions as zl
 # Keep in mind that, for each search term, the number of listings scraped is 
 # capped at 520, so in using a search term like "Chicago" the scraper would 
 # end up missing most of the results.
-st = zl.zipcodes_list(st_items = ['10', '11', '606'])
+st = zl.zipcodes_list(st_items = ['100', '770'])
 
 # Initialize the webdriver.
-driver = zl.init_driver('C:/Users/username/Documents/chromedriver')
+driver = zl.init_driver('C:/Users/username/My Documents/chromedriver')
 
 # Go to www.zillow.com/homes
 zl.navigate_to_website(driver, "http://www.zillow.com/homes")
@@ -65,23 +65,32 @@ count = 0
 # Get total number of search terms.
 numSearchTerms = len(st)
 
-for k in range(len(st)):
+for k in range(numSearchTerms):
     # Define search term (must be str object).
     search_term = st[k]
 
     # Enter search term and execute search.
-    zl.enter_search_term(driver, search_term, k, numSearchTerms)
-    time.sleep(3)
+    if zl.enter_search_term(driver, search_term, k, numSearchTerms):
+        print("Entering search term number " + str(k+1) + 
+              " out of " + str(numSearchTerms))
+    elif zl.enter_search_term(driver, search_term, k, numSearchTerms) == False:
+        print("Search term " + str(k+1) + 
+              " failed, moving onto next search term")
+        continue
     
     # Check to see if any results were returned from the search.
     # If there were none, move onto the next search.
     if zl.results_test(driver, search_term):
+        print("Search " + str(search_term) + 
+              " returned zero results. Moving onto the next search")
+        print("***")
         continue
-
+    
     # Pull the html for each page of search results. Zillow caps results at 
     # 20 pages, each page can contain 26 home listings, thus the cap on home 
     # listings per search is 520.
     rawdata = zl.get_html(driver)
+    print(str(len(rawdata)) + " pages of listings found")
     
     # Take the extracted HTML and split it up by individual home listings.
     listings = zl.get_listings(rawdata)
@@ -124,7 +133,7 @@ for k in range(len(st)):
         df.loc[n + count, "url"] = zl.get_url(listings[n])
         
     # Increase the count variable to match the current number of rows within df.
-    count = count + len(listings)
+    count += len(listings)
 
 # Close the webdriver connection.
 zl.close_connection(driver)
