@@ -108,8 +108,6 @@ def get_html(driver):
                     keep_going = False
             else:
                 keep_going = False
-        #else:
-            #print(str(len(output)) + " pages of listings found")
     return(output)
 
 def get_listings(list_obj):
