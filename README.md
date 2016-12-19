@@ -27,10 +27,10 @@ seems to fly below the radar of Zillows anti-scraping TOC rules.
 
 Some things to keep in mind:
 ---------------------------
-1. You will need to edit the function call param in line 39 within 
+- You will need to edit the function call param in line 39 within 
 `zillow_runfile.py` to point to the local path of your web driver program (required by Selenium).
-2. The max return for each search term (i.e. each zip code) is 520 home listings.
-3. There tends to be a small amount of NA's on every search, however foreclosure 
+- The max return for each search term (i.e. each zip code) is 520 home listings.
+- There tends to be a small amount of NA's on every search, however foreclosure 
 properties seem to be more likely to return NA's. So the more foreclosures 
 there are in a search, the more NA's there will be.
 
