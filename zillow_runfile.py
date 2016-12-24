@@ -70,17 +70,17 @@ for k in range(numSearchTerms):
     search_term = st[k]
 
     # Enter search term and execute search.
-    if zl.enter_search_term(driver, search_term, k, numSearchTerms):
+    if zl.enter_search_term(driver, search_term):
         print("Entering search term number " + str(k+1) + 
               " out of " + str(numSearchTerms))
-    elif zl.enter_search_term(driver, search_term, k, numSearchTerms) == False:
+    elif zl.enter_search_term(driver, search_term) == False:
         print("Search term " + str(k+1) + 
               " failed, moving onto next search term")
         continue
     
     # Check to see if any results were returned from the search.
     # If there were none, move onto the next search.
-    if zl.results_test(driver, search_term):
+    if zl.results_test(driver):
         print("Search " + str(search_term) + 
               " returned zero results. Moving onto the next search")
         print("***")

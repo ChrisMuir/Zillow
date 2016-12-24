@@ -45,7 +45,7 @@ def click_buy_button(driver):
     except (TimeoutException, NoSuchElementException):
         raise ValueError("Clicking the 'Buy' button failed")
 
-def enter_search_term(driver, search_term, k, numSearchTerms):
+def enter_search_term(driver, search_term):
     try:
         searchBar = driver.wait.until(EC.presence_of_element_located(
             (By.ID, "citystatezip")))
@@ -61,20 +61,29 @@ def enter_search_term(driver, search_term, k, numSearchTerms):
     except (TimeoutException, NoSuchElementException):
         return(False)
 
-def results_test(driver, search_term):
+def results_test(driver):
+    # Check to see if there are any returned results
     try:
         no_results = driver.find_element_by_css_selector(
             '.zoom-out-message').is_displayed()
-    except NoSuchElementException:
-        no_results = False
-    return(no_results)        
+    except (NoSuchElementException, TimeoutException):
+        # Check to see if the zipcode is invalid or not
+        try:
+            no_results = driver.find_element_by_class_name(
+                'zsg-icon-x-thick').is_displayed()
+        except (NoSuchElementException, TimeoutException):
+            no_results = False
+    return(no_results)
 
 def get_html(driver):
     output = []
     keep_going = True
     while keep_going:
         # Pull page HTML
-        output.append(driver.page_source)
+        try:
+            output.append(driver.page_source)
+        except TimeoutException:
+            pass
         try:
             # Check to see if a "next page" link exists
             keep_going = driver.find_element_by_class_name(
@@ -111,7 +120,7 @@ def get_html(driver):
     return(output)
 
 def get_listings(list_obj):
-    # Split the HTML within rawdata into segments, one for each house listing.
+    # Split the HTML into segments, one for each house listing.
     # Find out how many listings the search result returned:
     firstPages = (len(list_obj) - 1) * 26
     lastPage = list_obj[len(list_obj) - 1].split('" id="zpid_')
@@ -256,9 +265,9 @@ def get_sale_type(str_obj):
     'New Construction', 'Townhouse For Sale', 'Apartment For Sale', 
     'Make Me Move', 'For Sale by Owner', 'Lot/Land For Sale', 'Co-op For Sale']
     saletype = 'NA'
-    for i in range(len(types)):
-        if types[i] in str_obj:
-            saletype = types[i]
+    for i in types:
+        if i in str_obj:
+            saletype = i
             break
     if len(saletype) > 19 or saletype == 'null':
         saletype = 'NA'
