@@ -1,7 +1,7 @@
-"""
-Zillow scraper functions, these are sourced at the top of zillow_runfile.py
-"""
+# -*- coding: utf-8 -*-
+# Zillow scraper functions, these are sourced at the top of zillow_runfile.py
 
+import re as re
 import time
 import zipcode
 from selenium import webdriver
@@ -12,18 +12,16 @@ from selenium.common.exceptions import TimeoutException
 from selenium.common.exceptions import NoSuchElementException
 
 def zipcodes_list(st_items):
+    # If st_items is a single zipcode string.
     if type(st_items) == str:
         zcObjects = zipcode.islike(st_items)
-        output = []
-        for i in zcObjects:
-            output.append(str(i).split(" ", 1)[1].split(">")[0])
+        output = [str(i).split(" ", 1)[1].split(">")[0] 
+                    for i in zcObjects]
+    # If st_items is a list of zipcode strings.
     elif type(st_items) == list:
-        zcObjects = []
-        for i in st_items:
-            zcObjects = zcObjects + zipcode.islike(i)
-        output = []
-        for i in zcObjects:
-            output.append(str(i).split(" ", 1)[1].split(">")[0])
+        zcObjects = [n for i in st_items for n in zipcode.islike(str(i))]
+        output = [str(i).split(" ", 1)[1].split(">")[0] 
+                    for i in zcObjects]
     else:
         raise ValueError("input 'st_items' must be of type str or list")
     return(output)
@@ -91,7 +89,9 @@ def get_html(driver):
         except NoSuchElementException:
             keep_going = False
         if keep_going:
-            # Test to ensure the "updating results" image isnt displayed.
+            # Test to ensure the "updating results" image isnt displayed. 
+            # Will try up to 5 times before giving up, with a 5 second wait 
+            # between each try. 
             tries = 5
             try:
                 cover = driver.find_element_by_class_name(
@@ -106,8 +106,10 @@ def get_html(driver):
                         'list-loading-message-cover').is_displayed()
                 except (TimeoutException, NoSuchElementException):
                     cover = False
-            # If 'cover' is False, click next page. If its True, give up on 
-            # trying to click thru to the next page of house results.
+            # If the "updating results" image is confirmed to be gone 
+            # (cover == False), click next page. Otherwise, give up on trying 
+            # to click thru to the next page of house results, and return the 
+            # results that have been scraped up to the current page.
             if cover == False:
                 try:
                     driver.wait.until(EC.element_to_be_clickable(
@@ -120,169 +122,196 @@ def get_html(driver):
     return(output)
 
 def get_listings(list_obj):
-    # Split the HTML into segments, one for each house listing.
-    # Find out how many listings the search result returned:
-    firstPages = (len(list_obj) - 1) * 26
-    lastPage = list_obj[len(list_obj) - 1].split('" id="zpid_')
-    numListings = firstPages + (len(lastPage) - 1)
-    print(str(numListings)+" home listings scraped")
-    # Split the raw HTML into segments, one for each listing:
+    # Split the raw HTML into segments, one for each listing.
     output = []
     for i in list_obj:
         htmlSplit = i.split('" id="zpid_')[1:]
         output += htmlSplit
-    # Check to make sure the segmentation caught all the listings:
-    if numListings != len(output):
-        print("Warning: output will only contain info on " + 
-              str(len(output)) + " homes")
-    print("***")
+    print(str(len(output)) + " home listings scraped\n***")
     return(output)
 
-def get_street_address(str_obj):
+def get_street_address(soup_obj):
     try:
-        addressSplit = str_obj.split('" data-address="', 1)
-        address = addressSplit[1].split(', ', 1)[0]
-    except IndexError:
-        try:
-            addressSplit = str_obj.split('Sign in for details (', 1)
-            address = addressSplit[1].split(', ', 1)[0]
-        except IndexError:
-            addressSplit = 'NA'
-            address = 'NA'
-    if len(address) > 50 or address == 'null':
-        address = 'NA'
-    return(addressSplit, address)
+        street = soup_obj.find(
+            "span", {"itemprop" : "streetAddress"}).get_text().strip()
+    except (ValueError, AttributeError):
+        street = "NA"
+    if len(street) == 0 or street == "null":
+        street = "NA"
+    return(street)
     
-def get_city(addressSplit, address):
+    
+def get_city(soup_obj):
     try:
-        city = addressSplit[1].split(str(address) + ", ")[1].split(',', 1)[0]
-    except IndexError:
+        city = soup_obj.find(
+            "span", {"itemprop" : "addressLocality"}).get_text().strip()
+    except (ValueError, AttributeError):
         city = "NA"
-    if len(city) > 50 or city == 'null':
-        city = 'NA'
+    if len(city) == 0 or city == "null":
+        city = "NA"
     return(city)
 
-def get_state(addressSplit, city):
+def get_state(soup_obj):
     try:
-        state = addressSplit[1].split(str(city)+", ")[1].split(' ', 1)[0]
-        if len(state) > 2:
-            state = addressSplit[1].split(str(city)+", ", 1)[1].split(')', 1)[0]
-    except IndexError:
-        try:
-            state = addressSplit[1].split(str(city)+", ", 1)[1].split(')', 1)[0]
-        except IndexError:
-            state = 'NA'
-    if len(state) > 2 or state == 'null':
-        state = 'NA'
+        state = soup_obj.find(
+            "span", {"itemprop" : "addressRegion"}).get_text().strip()
+    except (ValueError, AttributeError):
+        state = "NA"
+    if len(state) == 0 or state == 'null':
+        state = "NA"
     return(state)
     
-def get_zipcode(addressSplit, state):
+def get_zipcode(soup_obj):
     try:
-        zipcode = addressSplit[1].split(str(state)+" ")[1].split('"', 1)[0]
-    except IndexError:
+        zipcode = soup_obj.find(
+            "span", {"itemprop" : "postalCode"}).get_text().strip()
+    except (ValueError, AttributeError):
         zipcode = "NA"
-    if len(zipcode) > 6 or zipcode == 'null':
-        zipcode = 'NA'
+    if len(zipcode) == 0 or zipcode == 'null':
+        zipcode = "NA"
     return(zipcode)
 
-def get_price(str_obj):
-    try:            
-        price = str_obj.split('$', 1)[1].split('<', 1)[0]
-    except IndexError:
-        price = 'NA'
-    if price != 'NA':
-        p2 = price.replace(',', '')
-        p2 = p2.replace('+', '')
-        if len(price) > 8:
-            p2 = price.split('"', 1)[0]
-            p2 = p2.replace(',', '')
-            p2 = p2.replace('+', '')
-        if len(p2) > 8:
-            price = 'NA'
-        if ('K' in p2):
-            p2 = p2.split('K', 1)[0]
-            p2 = str(p2) + "000"
-        if ('M' in p2):
-            p2 = p2.split('M', 1)[0]
-            if ('.' in p2) != True:
-                p2 = str(p2) + "000000"
-            else:
-                mlen = len(p2.split('.')[0])
-                if mlen == 1:
-                    pricelen = 7
-                else:
-                    pricelen = 8
-                p2 = p2.replace('.', '')
-                diff = pricelen - len(p2)
-                p2 = str(p2) + (diff * '0')
-        if len(p2) > 8 or len(p2) < 5 or p2 == 'null':
-            price = 'NA'
-        else:
-            price = p2
-    return(price)
-
-def get_sqft(str_obj):
+def get_price(soup_obj, list_obj):
+    # Look for price within the BeautifulSoup object.
     try:
-        sqft = str_obj.split(',"sqft":', 1)[1].split(',')[0]
-    except IndexError:
-        sqft = 'NA'
-    if len(sqft) > 8 or sqft == 'null':
-        sqft = 'NA'
+        price = soup_obj.find(
+            "span", {"class" : "zsg-photo-card-price"}).get_text().strip()
+    except (ValueError, AttributeError):
+        # If that fails, look for price within list_obj (object "card_info").
+        try:
+            price = [n for n in list_obj 
+                if any(["$" in n, "K" in n, "k" in n])]:
+            if len(price) > 0:
+                price = price[0].split(" ")
+                price = [n for n in price if re.search("[0-9]", n) is not None]
+                if len(price[0]) > 0:
+                    price = price[0]
+                else:
+                    price = "NA"
+            else:
+                price = "NA"
+        except (ValueError, AttributeError):
+            price = "NA"
+    if len(price) == 0 or price == "null":
+        price = "NA"
+    if price is not "NA":
+        # Transformations to the price string.
+        price = price.replace(",", "").replace("+", "").replace("$", "")
+        if any(["K" in price, "k" in price]):
+            price = price.lower().split("k")[0].strip()
+            price = price + "000"
+        if any(["M" in price, "m" in price]):
+            price = price.lower().split("m")[0].strip()
+            if "." not in price:
+                price = price + "000000"
+            else:
+                pricelen = len(price.split('.')[0]) + 6
+                price = price.replace('.', '')
+                diff = pricelen - len(price)
+                price = price + (diff * "0")
+        if len(price) == 0:
+            price = 'NA'
+    return(price)
+    
+def get_card_info(soup_obj):
+    # For most listings, card_info will contain info on number of bedrooms, 
+    # number of bathrooms, square footage, and sometimes price.
+    try:
+        card = soup_obj.find(
+            "span", {"class" : "zsg-photo-card-info"}).get_text().split(" · ")
+    except (ValueError, AttributeError):
+        card = "NA"
+    if len(card) == 0 or card == 'null':
+        card = "NA"
+    return(card)
+
+def get_sqft(list_obj):
+    sqft = [n for n in list_obj if "sqft" in n]
+    if len(sqft) > 0:
+        try:
+            sqft = float(sqft[0].split("sqft")[0].strip().replace(",", "").replace("+", ""))
+        except (ValueError, IndexError):
+            sqft = "NA"
+        if sqft == 0:
+            sqft = "NA"
+    else:
+        sqft = "NA"
     return(sqft)
 
-def get_bedrooms(str_obj):
-    try:
-        bedrooms = str_obj.split('{"bed":', 1)[1].split(',')[0]
-    except IndexError:
-        bedrooms = 'NA'
-    if len(bedrooms) > 4 or bedrooms == 'null':
-        bedrooms = 'NA'
-    return(bedrooms)
+def get_bedrooms(list_obj):
+    beds = [n for n in list_obj if any(["bd" in n, "tudio" in n])]
+    if len(beds) > 0:
+        if any([beds[0] == "Studio", beds[0] == "studio"]):
+            beds = 0
+            return(beds)
+        try:
+            beds = float(beds[0].split("bd")[0].strip())
+        except (ValueError, IndexError):
+            if any([beds[0] == "Studio", beds[0] == "studio"]):
+                beds = 0
+            else:
+                beds = "NA"
+    else:
+        beds = "NA"
+    return(beds)
 
-def get_bathrooms(str_obj):
-    try:
-        bathrooms = str_obj.split(',"bath":', 1)[1].split('}')[0]
-    except IndexError:
-        bathrooms = 'NA'
-    if len(bathrooms) > 5:
-        bathrooms = bathrooms.split(',', 1)[0]
-    if len(bathrooms) > 5 or bathrooms == 'null':
-        bathrooms = 'NA'
-    return(bathrooms)
+def get_bathrooms(list_obj):
+    baths = [n for n in list_obj if "ba" in n]
+    if len(baths) > 0:
+        try:
+            baths = float(baths[0].split("ba")[0].strip())
+        except (ValueError, IndexError):
+            baths = "NA"
+        if baths == 0:
+            baths = "NA"
+    else:
+        baths = "NA"
+    return(baths)
 
-def get_days_on_market(str_obj):
+def get_days_on_market(soup_obj):
     try:
-        dom = str_obj.split('days', 1)[0]
-        dom = dom[-11:-1].split('>', 1)[1]
-    except IndexError:
-        dom = "NA"
-    if len(dom) > 6 or dom == 'null':
+        dom = soup_obj.find_all(
+            "span", {"class" : "zsg-photo-card-notification"})
+        dom = [n for n in dom if "illow" in n.get_text()]
+        if len(dom) > 0:
+            dom = dom[0].get_text().strip()
+            dom = int(dom.split(" ")[0])
+        else:
+            dom = "NA"
+    except (ValueError, AttributeError):
         dom = "NA"
     return(dom)
 
-def get_sale_type(str_obj):
-    types = ['House For Sale', 'Condo For Sale', 'Foreclosure', 
-    'New Construction', 'Townhouse For Sale', 'Apartment For Sale', 
-    'Make Me Move', 'For Sale by Owner', 'Lot/Land For Sale', 'Co-op For Sale']
-    saletype = 'NA'
-    for i in types:
-        if i in str_obj:
-            saletype = i
-            break
-    if len(saletype) > 19 or saletype == 'null':
-        saletype = 'NA'
+def get_sale_type(soup_obj):
+    try:
+        saletype = soup_obj.find(
+            "span", {"class" : "zsg-photo-card-status"}).get_text().strip()
+    except (ValueError, AttributeError):
+        saletype = "NA"
+    if len(saletype) == 0 or saletype == 'null':
+        saletype = "NA"
     return(saletype)
 
-def get_url(str_obj):
-    try:
-        homeID = str_obj.split('"', 1)[0]
-    except IndexError:
-        homeID = 'NA'
-    if len(homeID) < 13 and homeID != 'NA':
-        url1 = 'http://www.zillow.com/homes/for_sale/'
-        url3 = '_zpid/any_days/globalrelevanceex_sort/29.759534,-95.335321,' 
-        url4 = '29.675003,-95.502863_rect/12_zm/'
-        url = url1 + homeID + url3 + url4
+def get_url(soup_obj):
+    # Try to find url in the BeautifulSoup object.
+    href = [n["href"] for n in soup_obj.find_all("a", href = True)]
+    url = [i for i in href if "homedetails" in i]
+    if len(url) > 0:
+        url = "http://www.zillow.com/homes/for_sale/" + url[0]
+    else:
+        # If that fails, contruct the url from the zpid of the listing.
+        url = [i for i in href if "zpid" in i and "avorite" not in i]
+        if len(url) > 0:
+            zpid = re.findall(r"\d{8,10}", href[0])
+            if zpid is not None and len(zpid) > 0:
+                url = 'http://www.zillow.com/homes/for_sale/' \
+                        + str(zpid[0]) \
+                        + '_zpid/any_days/globalrelevanceex_sort/29.759534,' \
+                        + '-95.335321,29.675003,-95.502863_rect/12_zm/'
+            else:
+                url = "NA"
+        else:
+            url = "NA"
     return(url)
 
 def close_connection(driver):

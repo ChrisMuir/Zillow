@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 '''
 WARNING: Use this code at your own risk, scraping is against Zillow's TOC.
 
@@ -8,7 +9,7 @@ and then writes the df to a CSV file that gets saved to your working directory.
 
 Software requirements/info:
 - This code was written using Python 3.5.
-- Scraping is done with Selenium v3.0.1, which can be downloaded here: 
+- Scraping is done with Selenium v3.0.2, which can be downloaded here: 
   http://www.seleniumhq.org/download/
 - The selenium package requires a webdriver program. This code was written 
   using Chromedriver v2.25, which can be downloaded here: 
@@ -19,6 +20,7 @@ Software requirements/info:
 import time
 import pandas as pd
 import zillow_functions as zl
+from bs4 import BeautifulSoup
 
 # Create list of search terms.
 # Function zipcodes_list() creates a list of US zip codes that will be 
@@ -33,10 +35,12 @@ import zillow_functions as zl
 # Keep in mind that, for each search term, the number of listings scraped is 
 # capped at 520, so in using a search term like "Chicago" the scraper would 
 # end up missing most of the results.
-st = zl.zipcodes_list(st_items = ['100', '770'])
+# Param st_items can be either a list of zipcode strings, or a single zipcode 
+# string.
+st = zl.zipcodes_list(st_items = ["100", "770"])
 
 # Initialize the webdriver.
-driver = zl.init_driver('C:/Users/username/My Documents/chromedriver')
+driver = zl.init_driver("C:/Users/username/chromedriver.exe")
 
 # Go to www.zillow.com/homes
 zl.navigate_to_website(driver, "http://www.zillow.com/homes")
@@ -47,24 +51,21 @@ zl.click_buy_button(driver)
 # Create 11 variables from the scrapped HTML data.
 # These variables will make up the final output dataframe.
 df = pd.DataFrame({'address' : [], 
-                   'city' : [], 
-                   'state' : [], 
-                   'zip' : [], 
-                   'price' : [], 
-                   'sqft' : [], 
-                   'bedrooms' : [], 
                    'bathrooms' : [], 
+                   'bedrooms' : [], 
+                   'city' : [], 
                    'days_on_zillow' : [], 
+                   'price' : [], 
                    'sale_type' : [], 
-                   'url' : []})
-
-# Establish variable that will keep count of the number of rows of the final 
-# output df as it grows during the loop.
-count = 0
+                   'state' : [], 
+                   'sqft' : [], 
+                   'url' : [], 
+                   'zip' : []})
 
 # Get total number of search terms.
 numSearchTerms = len(st)
 
+# Start the scraping.
 for k in range(numSearchTerms):
     # Define search term (must be str object).
     search_term = st[k]
@@ -73,17 +74,16 @@ for k in range(numSearchTerms):
     if zl.enter_search_term(driver, search_term):
         print("Entering search term number " + str(k+1) + 
               " out of " + str(numSearchTerms))
-    elif zl.enter_search_term(driver, search_term) == False:
+    else:
         print("Search term " + str(k+1) + 
-              " failed, moving onto next search term")
+              " failed, moving onto next search term\n***")
         continue
     
     # Check to see if any results were returned from the search.
     # If there were none, move onto the next search.
     if zl.results_test(driver):
         print("Search " + str(search_term) + 
-              " returned zero results. Moving onto the next search")
-        print("***")
+              " returned zero results. Moving onto the next search\n***")
         continue
     
     # Pull the html for each page of search results. Zillow caps results at 
@@ -98,42 +98,49 @@ for k in range(numSearchTerms):
     # For each home listing, extract the 11 variables that will populate that 
     # specific observation within the output dataframe.
     for n in range(len(listings)):
-        # Street address, city, state, and zipcode
-        addressSplit, address = zl.get_street_address(listings[n])
-        if addressSplit != 'NA':
-            city = zl.get_city(addressSplit, address)
-            state = zl.get_state(addressSplit, city)
-            zipcode = zl.get_zipcode(addressSplit, state)
-        else:
-            city = 'NA'
-            state = 'NA'
-            zipcode = 'NA'
-        df.loc[n + count, 
-               ["address", "city", "state", "zip"]] = address.strip(), city, state, zipcode
-    
-        # Price
-        df.loc[n + count, "price"] = zl.get_price(listings[n])
+        soup = BeautifulSoup(listings[n], "lxml")
+        new_obs = []
         
-        # Square footage
-        df.loc[n + count, "sqft"] = zl.get_sqft(listings[n])
+        # List that contains number of beds, baths, and total sqft (and 
+        # sometimes price as well).
+        card_info = zl.get_card_info(soup)
         
-        # Number of bedrooms
-        df.loc[n + count, "bedrooms"] = zl.get_bedrooms(listings[n])
+        # Street Address
+        new_obs.append(zl.get_street_address(soup))
         
-        # Number of bathrooms
-        df.loc[n + count, "bathrooms"] = zl.get_bathrooms(listings[n])
+        # Bathrooms
+        new_obs.append(zl.get_bathrooms(card_info))
+        
+        # Bedrooms
+        new_obs.append(zl.get_bedrooms(card_info))
+        
+        # City
+        new_obs.append(zl.get_city(soup))
         
         # Days on the Market/Zillow
-        df.loc[n + count, "days_on_zillow"] = zl.get_days_on_market(listings[n])
+        new_obs.append(zl.get_days_on_market(soup))
+        
+        # Price
+        new_obs.append(zl.get_price(soup, card_info))
         
         # Sale Type (House for Sale, New Construction, Foreclosure, etc.)
-        df.loc[n + count, "sale_type"] = zl.get_sale_type(listings[n])
+        new_obs.append(zl.get_sale_type(soup))
         
-        # url for each house listing
-        df.loc[n + count, "url"] = zl.get_url(listings[n])
+        # Sqft
+        new_obs.append(zl.get_sqft(card_info))
         
-    # Increase the count variable to match the current number of rows within df.
-    count += len(listings)
+        # State
+        new_obs.append(zl.get_state(soup))
+        
+        # URL for each house listing
+        new_obs.append(zl.get_url(soup))
+        
+        # Zipcode
+        new_obs.append(zl.get_zipcode(soup))
+    
+        # Append new_obs to df as a new observation
+        if len(new_obs) == len(df.columns):
+            df.loc[len(df.index)] = new_obs
 
 # Close the webdriver connection.
 zl.close_connection(driver)
@@ -141,6 +148,7 @@ zl.close_connection(driver)
 # Write df to CSV.
 columns = ['address', 'city', 'state', 'zip', 'price', 'sqft', 'bedrooms', 
            'bathrooms', 'days_on_zillow', 'sale_type', 'url']
+
 df = df[columns]
 dt = time.strftime("%Y-%m-%d") + "_" + time.strftime("%H%M%S")
 filename = str(dt) + ".csv"

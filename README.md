@@ -27,7 +27,7 @@ seems to fly below the radar of Zillows anti-scraping TOC rules.
 
 Some things to keep in mind:
 ---------------------------
-- You will need to edit the function call param in line 39 within 
+- You will need to edit the function parameter in line 41 within 
 `zillow_runfile.py` to point to the local path of your web driver program (required by Selenium).
 - The max return for each search term (i.e. each zip code) is 520 home listings.
 - There tends to be a small amount of NA's on every search, however foreclosure 
@@ -37,7 +37,7 @@ there are in a search, the more NA's there will be.
 Software Requirements/Info
 ---------------------
 - This code was written using [Python 3.5](https://www.python.org/downloads/).
-- Scraping is done with [Selenium v3.0.1](http://www.seleniumhq.org/download/).
+- This code was written using [Selenium v3.0.2](http://www.seleniumhq.org/download/).
 - The Selenium package requires a webdriver program. This code was written 
 using [Chromedriver v2.25](https://sites.google.com/a/chromium.org/chromedriver/downloads).
 
