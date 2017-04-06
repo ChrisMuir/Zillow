@@ -180,7 +180,7 @@ def get_price(soup_obj, list_obj):
         # If that fails, look for price within list_obj (object "card_info").
         try:
             price = [n for n in list_obj 
-                if any(["$" in n, "K" in n, "k" in n])]:
+                if any(["$" in n, "K" in n, "k" in n])]
             if len(price) > 0:
                 price = price[0].split(" ")
                 price = [n for n in price if re.search("[0-9]", n) is not None]
