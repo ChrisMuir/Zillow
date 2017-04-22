@@ -31,7 +31,7 @@ def init_driver(filepath):
     options = webdriver.ChromeOptions()
     options.add_argument("--start-maximized")
 
-    driver = webdriver.Chrome(executable_path = filepath)
+    driver = webdriver.Chrome(executable_path=filepath, chrome_options=options)
     driver.wait = WebDriverWait(driver, 10)
     return(driver)
 
