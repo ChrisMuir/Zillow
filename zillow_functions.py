@@ -27,7 +27,11 @@ def zipcodes_list(st_items):
     return(output)
 
 def init_driver(filepath):
-    driver = webdriver.Chrome(executable_path = filepath)
+    # Starting maximized fixes https://github.com/ChrisMuir/Zillow/issues/1
+    options = webdriver.ChromeOptions()
+    options.add_argument("--start-maximized")
+
+    driver = webdriver.Chrome(executable_path=filepath, chrome_options=options)
     driver.wait = WebDriverWait(driver, 10)
     return(driver)
 
