@@ -63,17 +63,17 @@ df = pd.DataFrame({'address' : [],
                    'zip' : []})
 
 # Get total number of search terms.
-numSearchTerms = len(st)
+num_search_terms = len(st)
 
 # Start the scraping.
-for k in range(numSearchTerms):
+for k in range(num_search_terms):
     # Define search term (must be str object).
     search_term = st[k]
 
     # Enter search term and execute search.
     if zl.enter_search_term(driver, search_term):
         print("Entering search term number " + str(k+1) + 
-              " out of " + str(numSearchTerms))
+              " out of " + str(num_search_terms))
     else:
         print("Search term " + str(k+1) + 
               " failed, moving onto next search term\n***")
@@ -89,11 +89,11 @@ for k in range(numSearchTerms):
     # Pull the html for each page of search results. Zillow caps results at 
     # 20 pages, each page can contain 26 home listings, thus the cap on home 
     # listings per search is 520.
-    rawdata = zl.get_html(driver)
-    print(str(len(rawdata)) + " pages of listings found")
+    raw_data = zl.get_html(driver)
+    print(str(len(raw_data)) + " pages of listings found")
     
     # Take the extracted HTML and split it up by individual home listings.
-    listings = zl.get_listings(rawdata)
+    listings = zl.get_listings(raw_data)
     
     # For each home listing, extract the 11 variables that will populate that 
     # specific observation within the output dataframe.
@@ -148,8 +148,7 @@ zl.close_connection(driver)
 # Write df to CSV.
 columns = ['address', 'city', 'state', 'zip', 'price', 'sqft', 'bedrooms', 
            'bathrooms', 'days_on_zillow', 'sale_type', 'url']
-
 df = df[columns]
 dt = time.strftime("%Y-%m-%d") + "_" + time.strftime("%H%M%S")
-filename = str(dt) + ".csv"
-df.to_csv(filename, index = False)
+file_name = str(dt) + ".csv"
+df.to_csv(file_name, index = False)

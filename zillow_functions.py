@@ -14,24 +14,24 @@ from selenium.common.exceptions import NoSuchElementException
 def zipcodes_list(st_items):
     # If st_items is a single zipcode string.
     if type(st_items) == str:
-        zcObjects = zipcode.islike(st_items)
+        zc_objects = zipcode.islike(st_items)
         output = [str(i).split(" ", 1)[1].split(">")[0] 
-                    for i in zcObjects]
+                    for i in zc_objects]
     # If st_items is a list of zipcode strings.
     elif type(st_items) == list:
-        zcObjects = [n for i in st_items for n in zipcode.islike(str(i))]
+        zc_objects = [n for i in st_items for n in zipcode.islike(str(i))]
         output = [str(i).split(" ", 1)[1].split(">")[0] 
-                    for i in zcObjects]
+                    for i in zc_objects]
     else:
         raise ValueError("input 'st_items' must be of type str or list")
     return(output)
 
-def init_driver(filepath):
+def init_driver(file_path):
     # Starting maximized fixes https://github.com/ChrisMuir/Zillow/issues/1
     options = webdriver.ChromeOptions()
     options.add_argument("--start-maximized")
 
-    driver = webdriver.Chrome(executable_path=filepath, chrome_options=options)
+    driver = webdriver.Chrome(executable_path=file_path, chrome_options=options)
     driver.wait = WebDriverWait(driver, 10)
     return(driver)
 
@@ -49,13 +49,13 @@ def click_buy_button(driver):
 
 def enter_search_term(driver, search_term):
     try:
-        searchBar = driver.wait.until(EC.presence_of_element_located(
+        search_bar = driver.wait.until(EC.presence_of_element_located(
             (By.ID, "citystatezip")))
         button = driver.wait.until(EC.element_to_be_clickable(
             (By.CLASS_NAME, "zsg-icon-searchglass")))
-        searchBar.clear()
+        search_bar.clear()
         time.sleep(3)
-        searchBar.send_keys(search_term)
+        search_bar.send_keys(search_term)
         time.sleep(3)
         button.click()
         time.sleep(3)
