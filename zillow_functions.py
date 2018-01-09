@@ -21,7 +21,7 @@ def zipcodes_list(st_items):
         zc_objects = [n for i in st_items for n in zipcode.islike(str(i))]
         output = [str(i).split(" ", 1)[1].split(">")[0] for i in zc_objects]
     else:
-        raise ValueError("input 'st_items' must be of type str or list")
+        raise ValueError("arg 'st_items' must be of type str or list")
     return(output)
 
 def init_driver(file_path):
@@ -63,18 +63,28 @@ def enter_search_term(driver, search_term):
     except (TimeoutException, NoSuchElementException):
         return(False)
 
-def results_test(driver):
-    # Check to see if there are any returned results
-    try:
-        no_results = driver.find_element_by_css_selector(
-            ".zoom-out-message").is_displayed()
-    except (NoSuchElementException, TimeoutException):
-        # Check to see if the zipcode is invalid or not
+def _is_element_displayed(driver, elem_text, elem_type):
+    if elem_type == "class":
         try:
-            no_results = driver.find_element_by_class_name(
-                "zsg-icon-x-thick").is_displayed()
+            out = driver.find_element_by_class_name(elem_text).is_displayed()
         except (NoSuchElementException, TimeoutException):
-            no_results = False
+            out = False
+    elif elem_type == "css":
+        try:
+            out = driver.find_element_by_css_selector(elem_text).is_displayed()
+        except (NoSuchElementException, TimeoutException):
+            out = False
+    else:
+        raise ValueError("arg 'elem_type' must be either 'class' or 'css'")
+    return(out)
+
+def test_for_no_results(driver):
+    # Check to see if the "zoom out" msg exists (an indication that no results
+    # were returned from the search).
+    no_results = _is_element_displayed(driver, ".zoom-out-message", "css")
+    # If the zoom-out msg is not displayed, check for "invalid zip" msg.
+    if not no_results:
+        no_results = _is_element_displayed(driver, "zsg-icon-x-thick", "class")
     return(no_results)
 
 def get_html(driver):
@@ -86,30 +96,23 @@ def get_html(driver):
             output.append(driver.page_source)
         except TimeoutException:
             pass
-        try:
-            # Check to see if a "next page" link exists
-            keep_going = driver.find_element_by_class_name(
-                "zsg-pagination-next").is_displayed()
-        except NoSuchElementException:
-            keep_going = False
+        # Check to see if a "next page" link exists.
+        keep_going = _is_element_displayed(driver, "zsg-pagination-next", 
+                                           "class")
         if keep_going:
             # Test to ensure the "updating results" image isnt displayed. 
             # Will try up to 5 times before giving up, with a 5 second wait 
             # between each try.             
             tries = 5
-            try:
-                cover = driver.find_element_by_class_name(
-                    "list-loading-message-cover").is_displayed()
-            except (TimeoutException, NoSuchElementException):
-                cover = False
+            cover = _is_element_displayed(driver, 
+                                          "list-loading-message-cover", 
+                                          "class")
             while cover and tries > 0:
                 time.sleep(5)
                 tries -= 1
-                try:
-                    cover = driver.find_element_by_class_name(
-                        "list-loading-message-cover").is_displayed()
-                except (TimeoutException, NoSuchElementException):
-                    cover = False
+                cover = _is_element_displayed(driver, 
+                                              "list-loading-message-cover", 
+                                              "class")
             # If the "updating results" image is confirmed to be gone 
             # (cover == False), click next page. Otherwise, give up on trying 
             # to click thru to the next page of house results, and return the 
@@ -131,11 +134,10 @@ def get_listings(list_obj):
     for i in list_obj:
         htmlSplit = i.split('" id="zpid_')[1:]
         output += htmlSplit
-    print("%s home listings scraped\n***" % str(len(output)))
     return(output)
 
 # Helper function for testing if an object is "empty" or not.
-def is_empty(obj):
+def _is_empty(obj):
     if any([len(obj) == 0, obj == "null"]):
         return(True)
     else:
@@ -149,7 +151,7 @@ def get_card_info(soup_obj):
             "span", {"class" : "zsg-photo-card-info"}).get_text().split(u" \xb7 ")
     except (ValueError, AttributeError):
         card = "NA"
-    if is_empty(card):
+    if _is_empty(card):
         card = "NA"
     return(card)
 
@@ -159,7 +161,7 @@ def get_street_address(soup_obj):
             "span", {"itemprop" : "streetAddress"}).get_text().strip()
     except (ValueError, AttributeError):
         street = "NA"
-    if is_empty(street):
+    if _is_empty(street):
         street = "NA"
     return(street)
 
@@ -169,7 +171,7 @@ def get_city(soup_obj):
             "span", {"itemprop" : "addressLocality"}).get_text().strip()
     except (ValueError, AttributeError):
         city = "NA"
-    if is_empty(city):
+    if _is_empty(city):
         city = "NA"
     return(city)
 
@@ -179,7 +181,7 @@ def get_state(soup_obj):
             "span", {"itemprop" : "addressRegion"}).get_text().strip()
     except (ValueError, AttributeError):
         state = "NA"
-    if is_empty(state):
+    if _is_empty(state):
         state = "NA"
     return(state)
 
@@ -189,7 +191,7 @@ def get_zipcode(soup_obj):
             "span", {"itemprop" : "postalCode"}).get_text().strip()
     except (ValueError, AttributeError):
         zipcode = "NA"
-    if is_empty(zipcode):
+    if _is_empty(zipcode):
         zipcode = "NA"
     return(zipcode)
 
@@ -214,7 +216,7 @@ def get_price(soup_obj, list_obj):
                 price = "NA"
         except (ValueError, AttributeError):
             price = "NA"
-    if is_empty(price):
+    if _is_empty(price):
         price = "NA"
     if price != "NA":
         # Transformations to the price string.
@@ -230,7 +232,7 @@ def get_price(soup_obj, list_obj):
                 pricelen = len(price.split(".")[0]) + 6
                 price = price.replace(".", "")
                 price = price + ((pricelen - len(price)) * "0")
-        if is_empty(price):
+        if _is_empty(price):
             price = "NA"
     return(price)
 
@@ -299,7 +301,7 @@ def get_sale_type(soup_obj):
             "span", {"class" : "zsg-photo-card-status"}).get_text().strip()
     except (ValueError, AttributeError):
         sale_type = "NA"
-    if is_empty(sale_type):
+    if _is_empty(sale_type):
         sale_type = "NA"
     return(sale_type)
 

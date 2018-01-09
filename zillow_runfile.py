@@ -67,7 +67,7 @@ for idx, term in enumerate(st):
 
     # Check to see if any results were returned from the search.
     # If there were none, move onto the next search.
-    if zl.results_test(driver):
+    if zl.test_for_no_results(driver):
         print("Search %s returned zero results. Moving on to next search\n***" %
               str(term))
         continue
@@ -80,6 +80,7 @@ for idx, term in enumerate(st):
 
     # Take the extracted HTML and split it up by individual home listings.
     listings = zl.get_listings(raw_data)
+    print("%s home listings scraped\n***" % str(len(listings)))
 
     # For each home listing, extract the 11 variables that will populate that 
     # specific observation within the output dataframe.
