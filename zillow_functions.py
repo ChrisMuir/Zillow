@@ -33,8 +33,46 @@ def init_driver(file_path):
     driver.wait = WebDriverWait(driver, 10)
     return(driver)
 
+# Helper function for checking for the presence of a web element.
+def _is_element_displayed(driver, elem_text, elem_type):
+    if elem_type == "class":
+        try:
+            out = driver.find_element_by_class_name(elem_text).is_displayed()
+        except (NoSuchElementException, TimeoutException):
+            out = False
+    elif elem_type == "css":
+        try:
+            out = driver.find_element_by_css_selector(elem_text).is_displayed()
+        except (NoSuchElementException, TimeoutException):
+            out = False
+    else:
+        raise ValueError("arg 'elem_type' must be either 'class' or 'css'")
+    return(out)
+
+# If captcha page is displayed, this function will run indefinitely until the 
+# captcha page is no longer displayed (checks for it every 30 seconds).
+# Purpose of the function is to "pause" execution of the scraper until the 
+# user has manually completed the captcha requirements.
+def _pause_for_captcha(driver):
+    while True:
+        time.sleep(30)
+        if not _is_element_displayed(driver, "captcha-container", "class"):
+            break
+
+# Check to see if the page is currently stuck on a captcha page. If so, pause 
+# the scraper until user has manually completed the captcha requirements.
+def check_for_captcha(driver):
+    if _is_element_displayed(driver, "captcha-container", "class"):
+        print("\nCAPTCHA!\n"\
+              "Manually complete the captcha requirements.\n"\
+              "Once that's done, if the program was in the middle of scraping "\
+              "(and is still running), it should resume scraping after ~30 seconds.")
+        _pause_for_captcha(driver)
+
 def navigate_to_website(driver, site):
     driver.get(site)
+    # Check to make sure a captcha page is not displayed.
+    check_for_captcha(driver)
 
 def click_buy_button(driver):
     try:
@@ -44,6 +82,8 @@ def click_buy_button(driver):
         time.sleep(10)
     except (TimeoutException, NoSuchElementException):
         raise ValueError("Clicking the 'Buy' button failed")
+    # Check to make sure a captcha page is not displayed.
+    check_for_captcha(driver)
 
 def enter_search_term(driver, search_term):
     if not isinstance(search_term, str):
@@ -62,21 +102,8 @@ def enter_search_term(driver, search_term):
         return(True)
     except (TimeoutException, NoSuchElementException):
         return(False)
-
-def _is_element_displayed(driver, elem_text, elem_type):
-    if elem_type == "class":
-        try:
-            out = driver.find_element_by_class_name(elem_text).is_displayed()
-        except (NoSuchElementException, TimeoutException):
-            out = False
-    elif elem_type == "css":
-        try:
-            out = driver.find_element_by_css_selector(elem_text).is_displayed()
-        except (NoSuchElementException, TimeoutException):
-            out = False
-    else:
-        raise ValueError("arg 'elem_type' must be either 'class' or 'css'")
-    return(out)
+    # Check to make sure a captcha page is not displayed.
+    check_for_captcha(driver)
 
 def test_for_no_results(driver):
     # Check to see if the "zoom out" msg exists (an indication that no results
@@ -85,6 +112,8 @@ def test_for_no_results(driver):
     # If the zoom-out msg is not displayed, check for "invalid zip" msg.
     if not no_results:
         no_results = _is_element_displayed(driver, "zsg-icon-x-thick", "class")
+    # Check to make sure a captcha page is not displayed.
+    check_for_captcha(driver)
     return(no_results)
 
 def get_html(driver):
@@ -122,6 +151,8 @@ def get_html(driver):
                     driver.wait.until(EC.element_to_be_clickable(
                         (By.CLASS_NAME, "zsg-pagination-next"))).click()
                     time.sleep(3)
+                    # Check to make sure a captcha page is not displayed.
+                    check_for_captcha(driver)
                 except TimeoutException:
                     keep_going = False
             else:
