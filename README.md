@@ -1,3 +1,8 @@
+---
+output:
+  html_document: default
+  pdf_document: default
+---
 Zillow Scraping with Python
 ===========================
 
@@ -12,8 +17,8 @@ that gets saved to your working directory. Using zip codes as search terms
 seems to yield the best results, the scraper works at a rate of about 75 
 zip codes per hour (compared to the Zillow API limit of 1000 homes per 24h).
 
-There are two files, `zillow_runfile.py` and `zillow_functions.py`. Save them 
-both to your working directory, open the runfile and step through the code 
+There are two files, `zillow_runfile.py` and `zillow_functions.py`. Clone this 
+repo to your working directory, open the runfile and step through the code 
 line-by-line. The zillow functions are sourced at the top of the runfile.
 
 This tool uses a for loop to iterate over a list of input search terms, scrape 
@@ -43,32 +48,32 @@ using [Chromedriver](https://sites.google.com/a/chromium.org/chromedriver/downlo
 Example of the output dataframe
 -------------------------------
 
-```
-df.head(n=6)
+```py
+df.head(n = 6)
 ```
 
 ```
-                address     city state    zip    price  sqft bedrooms  \
-0         4251 Drake St  Houston    TX  77005   895000  3501        4   
-1  6534 Westchester Ave  Houston    TX  77005  1325000  2720        3   
-2     2635 Centenary St  Houston    TX  77005  1449000  4114        5   
-3     2336 Robinhood St  Houston    TX  77005  1295000  3652        3   
-4     3135 Bissonnet St  Houston    TX  77005   359000  1692        2   
-5         3824 Byron St  Houston    TX  77005  1100000  3161        3   
+                 address     city state    zip    price  sqft bedrooms  \
+0      3011 Bissonnet St  Houston    TX  77005   575000  1820        3   
+1          4229 Drake St  Houston    TX  77005   615000  2611        3   
+2        2237 Wroxton Rd  HOUSTON    TX  77005  2095000  5492        4   
+3      4318 Childress St  Houston    TX  77005   540000  2438        4   
+4       2708 Werlein Ave  Houston    TX  77005  1449000  3905        4   
+5  5402 Buffalo Speedway  Houston    TX  77005  1995000  4658        3   
 
   bathrooms days_on_zillow           sale_type  \
-0       4.0              4      House For Sale   
-1       3.0              8      House For Sale   
-2       5.0             NA      House For Sale   
-3       4.0             33      House For Sale   
-4       2.5             37  Townhouse For Sale   
-5       4.0             43      House For Sale   
+0         2             NA      House For Sale   
+1         3             NA   For Sale by Owner   
+2         5             NA      House For Sale   
+3         4              2  Townhouse For Sale   
+4         5              1      House For Sale   
+5         4              5      House For Sale   
 
                                                  url  
-0  http://www.zillow.com/homes/for_sale/27825953_...  
-1  http://www.zillow.com/homes/for_sale/27792196_...  
-2  http://www.zillow.com/homes/for_sale/27812119_...  
-3  http://www.zillow.com/homes/for_sale/27836800_...  
-4  http://www.zillow.com/homes/for_sale/27834549_...  
-5  http://www.zillow.com/homes/for_sale/27823372_...
+0  http://www.zillow.com/homes/for_sale//homedeta...  
+1  http://www.zillow.com/homes/for_sale//homedeta...  
+2  http://www.zillow.com/homes/for_sale//homedeta...  
+3  http://www.zillow.com/homes/for_sale//homedeta...  
+4  http://www.zillow.com/homes/for_sale//homedeta...  
+5  http://www.zillow.com/homes/for_sale//homedeta...  
 ```
