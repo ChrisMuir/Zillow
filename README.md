@@ -1,7 +1,7 @@
 Zillow Scraping with Python
 ===========================
 
-WARNING: Use this code at your own risk, scraping is against Zillow's TOC.
+WARNING: Use this code at your own risk, scraping is against Zillow's TOC
 -------------------------------------------------------------------------
 
 Basic tool for scraping current home listings from Zillow, written in Python 
@@ -22,12 +22,11 @@ allows the user to compile a large list of zip codes to use as search terms,
 using the package [zipcode](https://pypi.python.org/pypi/zipcode). For example, 
 `st = zipcodes_list(['10', '11', '770'])` 
 will yield every US zip code that begins with '10', '11', or '770' as a single 
-list. Object `st` could then be passed to the scraper. The scraper 
-seems to fly below the radar of Zillows anti-scraping TOC rules.
+list. Object `st` could then be passed to the scraper.
 
-Some things to keep in mind:
+Some things to keep in mind
 ---------------------------
-- You will need to edit the input parameter of function `init_driver` within`zillow_runfile.py` 
+- You will need to edit the input parameter of function `init_driver` within `zillow_runfile.py` 
 to point to the local path of your web driver program (required by Selenium).
 - The max return for each search term (i.e. each zip code) is 520 home listings.
 - There tends to be a small amount of NA's on every search, however foreclosure 
@@ -35,14 +34,14 @@ properties seem to be more likely to return NA's. So the more foreclosures
 there are in a search, the more NA's there will be.
 
 Software Requirements/Info
----------------------
+--------------------------
 - This code was written using [Python 3.5](https://www.python.org/downloads/).
-- This code was written using [Selenium v3.0.2](http://www.seleniumhq.org/download/).
+- [Selenium](http://www.seleniumhq.org/download/) (this can be PIP installed, written using v3.0.2).
 - The Selenium package requires a webdriver program. This code was written 
-using [Chromedriver v2.25](https://sites.google.com/a/chromium.org/chromedriver/downloads).
+using [Chromedriver](https://sites.google.com/a/chromium.org/chromedriver/downloads) v2.25.
 
-Example of the output dataframe:
-------------------------
+Example of the output dataframe
+-------------------------------
 
 ```
 df.head(n=6)

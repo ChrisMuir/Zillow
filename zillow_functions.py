@@ -13,15 +13,13 @@ from selenium.common.exceptions import NoSuchElementException
 
 def zipcodes_list(st_items):
     # If st_items is a single zipcode string.
-    if type(st_items) == str:
+    if isinstance(st_items, str):
         zc_objects = zipcode.islike(st_items)
-        output = [str(i).split(" ", 1)[1].split(">")[0] 
-                    for i in zc_objects]
+        output = [str(i).split(" ", 1)[1].split(">")[0] for i in zc_objects]
     # If st_items is a list of zipcode strings.
-    elif type(st_items) == list:
+    elif isinstance(st_items, list):
         zc_objects = [n for i in st_items for n in zipcode.islike(str(i))]
-        output = [str(i).split(" ", 1)[1].split(">")[0] 
-                    for i in zc_objects]
+        output = [str(i).split(" ", 1)[1].split(">")[0] for i in zc_objects]
     else:
         raise ValueError("input 'st_items' must be of type str or list")
     return(output)
@@ -30,8 +28,8 @@ def init_driver(file_path):
     # Starting maximized fixes https://github.com/ChrisMuir/Zillow/issues/1
     options = webdriver.ChromeOptions()
     options.add_argument("--start-maximized")
-
-    driver = webdriver.Chrome(executable_path=file_path, chrome_options=options)
+    driver = webdriver.Chrome(executable_path=file_path, 
+                              chrome_options=options)
     driver.wait = WebDriverWait(driver, 10)
     return(driver)
 
@@ -48,6 +46,8 @@ def click_buy_button(driver):
         raise ValueError("Clicking the 'Buy' button failed")
 
 def enter_search_term(driver, search_term):
+    if not isinstance(search_term, str):
+        search_term = str(search_term)
     try:
         search_bar = driver.wait.until(EC.presence_of_element_located(
             (By.ID, "citystatezip")))
@@ -67,12 +67,12 @@ def results_test(driver):
     # Check to see if there are any returned results
     try:
         no_results = driver.find_element_by_css_selector(
-            '.zoom-out-message').is_displayed()
+            ".zoom-out-message").is_displayed()
     except (NoSuchElementException, TimeoutException):
         # Check to see if the zipcode is invalid or not
         try:
             no_results = driver.find_element_by_class_name(
-                'zsg-icon-x-thick').is_displayed()
+                "zsg-icon-x-thick").is_displayed()
         except (NoSuchElementException, TimeoutException):
             no_results = False
     return(no_results)
@@ -89,17 +89,17 @@ def get_html(driver):
         try:
             # Check to see if a "next page" link exists
             keep_going = driver.find_element_by_class_name(
-                'zsg-pagination-next').is_displayed()
+                "zsg-pagination-next").is_displayed()
         except NoSuchElementException:
             keep_going = False
         if keep_going:
             # Test to ensure the "updating results" image isnt displayed. 
             # Will try up to 5 times before giving up, with a 5 second wait 
-            # between each try. 
+            # between each try.             
             tries = 5
             try:
                 cover = driver.find_element_by_class_name(
-                    'list-loading-message-cover').is_displayed()
+                    "list-loading-message-cover").is_displayed()
             except (TimeoutException, NoSuchElementException):
                 cover = False
             while cover and tries > 0:
@@ -107,17 +107,17 @@ def get_html(driver):
                 tries -= 1
                 try:
                     cover = driver.find_element_by_class_name(
-                        'list-loading-message-cover').is_displayed()
+                        "list-loading-message-cover").is_displayed()
                 except (TimeoutException, NoSuchElementException):
                     cover = False
             # If the "updating results" image is confirmed to be gone 
             # (cover == False), click next page. Otherwise, give up on trying 
             # to click thru to the next page of house results, and return the 
             # results that have been scraped up to the current page.
-            if cover == False:
+            if not cover:
                 try:
                     driver.wait.until(EC.element_to_be_clickable(
-                        (By.CLASS_NAME, 'zsg-pagination-next'))).click()
+                        (By.CLASS_NAME, "zsg-pagination-next"))).click()
                     time.sleep(3)
                 except TimeoutException:
                     keep_going = False
@@ -125,14 +125,33 @@ def get_html(driver):
                 keep_going = False
     return(output)
 
+# Split the raw page source into segments, one for each home listing.
 def get_listings(list_obj):
-    # Split the raw HTML into segments, one for each listing.
     output = []
     for i in list_obj:
         htmlSplit = i.split('" id="zpid_')[1:]
         output += htmlSplit
-    print(str(len(output)) + " home listings scraped\n***")
+    print("%s home listings scraped\n***" % str(len(output)))
     return(output)
+
+# Helper function for testing if an object is "empty" or not.
+def is_empty(obj):
+    if any([len(obj) == 0, obj == "null"]):
+        return(True)
+    else:
+        return(False)
+
+# For most listings, card_info will contain info on number of bedrooms, 
+# number of bathrooms, square footage, and sometimes price.
+def get_card_info(soup_obj):
+    try:
+        card = soup_obj.find(
+            "span", {"class" : "zsg-photo-card-info"}).get_text().split(u" \xb7 ")
+    except (ValueError, AttributeError):
+        card = "NA"
+    if is_empty(card):
+        card = "NA"
+    return(card)
 
 def get_street_address(soup_obj):
     try:
@@ -140,18 +159,17 @@ def get_street_address(soup_obj):
             "span", {"itemprop" : "streetAddress"}).get_text().strip()
     except (ValueError, AttributeError):
         street = "NA"
-    if len(street) == 0 or street == "null":
+    if is_empty(street):
         street = "NA"
     return(street)
-    
-    
+
 def get_city(soup_obj):
     try:
         city = soup_obj.find(
             "span", {"itemprop" : "addressLocality"}).get_text().strip()
     except (ValueError, AttributeError):
         city = "NA"
-    if len(city) == 0 or city == "null":
+    if is_empty(city):
         city = "NA"
     return(city)
 
@@ -161,17 +179,17 @@ def get_state(soup_obj):
             "span", {"itemprop" : "addressRegion"}).get_text().strip()
     except (ValueError, AttributeError):
         state = "NA"
-    if len(state) == 0 or state == 'null':
+    if is_empty(state):
         state = "NA"
     return(state)
-    
+
 def get_zipcode(soup_obj):
     try:
         zipcode = soup_obj.find(
             "span", {"itemprop" : "postalCode"}).get_text().strip()
     except (ValueError, AttributeError):
         zipcode = "NA"
-    if len(zipcode) == 0 or zipcode == 'null':
+    if is_empty(zipcode):
         zipcode = "NA"
     return(zipcode)
 
@@ -184,10 +202,10 @@ def get_price(soup_obj, list_obj):
         # If that fails, look for price within list_obj (object "card_info").
         try:
             price = [n for n in list_obj 
-                if any(["$" in n, "K" in n, "k" in n])]
+                         if any(["$" in n, "K" in n, "k" in n])]
             if len(price) > 0:
                 price = price[0].split(" ")
-                price = [n for n in price if re.search("[0-9]", n) is not None]
+                price = [n for n in price if re.search("\d", n)]
                 if len(price[0]) > 0:
                     price = price[0]
                 else:
@@ -196,44 +214,33 @@ def get_price(soup_obj, list_obj):
                 price = "NA"
         except (ValueError, AttributeError):
             price = "NA"
-    if len(price) == 0 or price == "null":
+    if is_empty(price):
         price = "NA"
-    if price is not "NA":
+    if price != "NA":
         # Transformations to the price string.
-        price = price.replace(",", "").replace("+", "").replace("$", "")
-        if any(["K" in price, "k" in price]):
-            price = price.lower().split("k")[0].strip()
+        price = price.replace(",", "").replace("+", "").replace("$", "").lower()
+        if "k" in price:
+            price = price.split("k")[0].strip()
             price = price + "000"
-        if any(["M" in price, "m" in price]):
-            price = price.lower().split("m")[0].strip()
+        if "m" in price:
+            price = price.split("m")[0].strip()
             if "." not in price:
                 price = price + "000000"
             else:
-                pricelen = len(price.split('.')[0]) + 6
-                price = price.replace('.', '')
-                diff = pricelen - len(price)
-                price = price + (diff * "0")
-        if len(price) == 0:
-            price = 'NA'
+                pricelen = len(price.split(".")[0]) + 6
+                price = price.replace(".", "")
+                price = price + ((pricelen - len(price)) * "0")
+        if is_empty(price):
+            price = "NA"
     return(price)
-    
-def get_card_info(soup_obj):
-    # For most listings, card_info will contain info on number of bedrooms, 
-    # number of bathrooms, square footage, and sometimes price.
-    try:
-        card = soup_obj.find(
-            "span", {"class" : "zsg-photo-card-info"}).get_text().split(" · ")
-    except (ValueError, AttributeError):
-        card = "NA"
-    if len(card) == 0 or card == 'null':
-        card = "NA"
-    return(card)
 
 def get_sqft(list_obj):
     sqft = [n for n in list_obj if "sqft" in n]
     if len(sqft) > 0:
         try:
-            sqft = float(sqft[0].split("sqft")[0].strip().replace(",", "").replace("+", ""))
+            sqft = float(
+                sqft[0].split("sqft")[0].strip().replace(",", "").replace("+", "")
+            )
         except (ValueError, IndexError):
             sqft = "NA"
         if sqft == 0:
@@ -245,16 +252,13 @@ def get_sqft(list_obj):
 def get_bedrooms(list_obj):
     beds = [n for n in list_obj if any(["bd" in n, "tudio" in n])]
     if len(beds) > 0:
-        if any([beds[0] == "Studio", beds[0] == "studio"]):
-            beds = 0
-            return(beds)
+        beds = beds[0].lower()
+        if beds == "studio":
+            return(0.0)
         try:
-            beds = float(beds[0].split("bd")[0].strip())
+            beds = float(beds.split("bd")[0].strip())
         except (ValueError, IndexError):
-            if any([beds[0] == "Studio", beds[0] == "studio"]):
-                beds = 0
-            else:
-                beds = "NA"
+            beds = "NA"
     else:
         beds = "NA"
     return(beds)
@@ -276,10 +280,13 @@ def get_days_on_market(soup_obj):
     try:
         dom = soup_obj.find_all(
             "span", {"class" : "zsg-photo-card-notification"})
-        dom = [n for n in dom if "illow" in n.get_text()]
-        if len(dom) > 0:
-            dom = dom[0].get_text().strip()
-            dom = int(dom.split(" ")[0])
+        if dom is not None:
+            dom = [n.get_text().strip().lower() for n in dom]
+            dom = [n for n in dom if "zillow" in n]
+            if len(dom) > 0:
+                dom = int(dom[0].split(" ")[0])
+            else:
+                dom = "NA"
         else:
             dom = "NA"
     except (ValueError, AttributeError):
@@ -288,13 +295,13 @@ def get_days_on_market(soup_obj):
 
 def get_sale_type(soup_obj):
     try:
-        saletype = soup_obj.find(
+        sale_type = soup_obj.find(
             "span", {"class" : "zsg-photo-card-status"}).get_text().strip()
     except (ValueError, AttributeError):
-        saletype = "NA"
-    if len(saletype) == 0 or saletype == 'null':
-        saletype = "NA"
-    return(saletype)
+        sale_type = "NA"
+    if is_empty(sale_type):
+        sale_type = "NA"
+    return(sale_type)
 
 def get_url(soup_obj):
     # Try to find url in the BeautifulSoup object.
@@ -306,12 +313,12 @@ def get_url(soup_obj):
         # If that fails, contruct the url from the zpid of the listing.
         url = [i for i in href if "zpid" in i and "avorite" not in i]
         if len(url) > 0:
-            zpid = re.findall(r"\d{8,10}", href[0])
+            zpid = re.findall(r"\d{8,10}", url[0])
             if zpid is not None and len(zpid) > 0:
-                url = 'http://www.zillow.com/homes/for_sale/' \
+                url = "http://www.zillow.com/homes/for_sale/" \
                         + str(zpid[0]) \
-                        + '_zpid/any_days/globalrelevanceex_sort/29.759534,' \
-                        + '-95.335321,29.675003,-95.502863_rect/12_zm/'
+                        + "_zpid/any_days/globalrelevanceex_sort/29.759534," \
+                        + "-95.335321,29.675003,-95.502863_rect/12_zm/"
             else:
                 url = "NA"
         else:
