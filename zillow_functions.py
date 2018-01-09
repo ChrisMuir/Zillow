@@ -279,7 +279,7 @@ def get_bathrooms(list_obj):
 def get_days_on_market(soup_obj):
     try:
         dom = soup_obj.find_all(
-            "span", {"class" : "zsg-photo-card-notification"})
+            "ul", {"class" : "zsg-list_inline zsg-photo-card-badge"})
         if dom is not None:
             dom = [n.get_text().strip().lower() for n in dom]
             dom = [n for n in dom if "zillow" in n]
