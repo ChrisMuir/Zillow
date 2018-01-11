@@ -20,7 +20,7 @@ Software requirements/info:
 import time
 import pandas as pd
 from bs4 import BeautifulSoup
-import Zillow.zillow_functions as zl
+import zillow_functions as zl
 
 # Create list of search terms.
 # Function zipcodes_list() creates a list of US zip codes that will be 
