@@ -19,7 +19,6 @@ Software requirements/info:
 
 import time
 import pandas as pd
-from bs4 import BeautifulSoup
 import Zillow.zillow_functions as zl
 
 # Create list of search terms.
@@ -85,45 +84,41 @@ for idx, term in enumerate(st):
     # For each home listing, extract the 11 variables that will populate that 
     # specific observation within the output dataframe.
     for home in listings:
-        soup = BeautifulSoup(home, "lxml")
         new_obs = []
-
-        # List that contains number of beds, baths, and total sqft (and 
-        # sometimes price as well).
-        card_info = zl.get_card_info(soup)
+        parser = zl.html_parser(home)
 
         # Street Address
-        new_obs.append(zl.get_street_address(soup))
+        new_obs.append(parser.get_street_address())
         
         # City
-        new_obs.append(zl.get_city(soup))
+        new_obs.append(parser.get_city())
         
         # State
-        new_obs.append(zl.get_state(soup))
+        new_obs.append(parser.get_state())
         
         # Zipcode
-        new_obs.append(zl.get_zipcode(soup))
+        new_obs.append(parser.get_zipcode())
         
         # Price
-        new_obs.append(zl.get_price(soup, card_info))
+        new_obs.append(parser.get_price())
         
         # Sqft
-        new_obs.append(zl.get_sqft(card_info))
+        new_obs.append(parser.get_sqft())
         
         # Bedrooms
-        new_obs.append(zl.get_bedrooms(card_info))
+        new_obs.append(parser.get_bedrooms())
         
         # Bathrooms
-        new_obs.append(zl.get_bathrooms(card_info))
+        new_obs.append(parser.get_bathrooms())
         
         # Days on the Market/Zillow
-        new_obs.append(zl.get_days_on_market(soup))
+        new_obs.append(parser.get_days_on_market())
         
         # Sale Type (House for Sale, New Construction, Foreclosure, etc.)
-        new_obs.append(zl.get_sale_type(soup))
+        new_obs.append(parser.get_sale_type())
         
         # URL for each house listing
-        new_obs.append(zl.get_url(soup))
+        new_obs.append(parser.get_url())
         
         # Append new_obs to list output_data.
         output_data.append(new_obs)
