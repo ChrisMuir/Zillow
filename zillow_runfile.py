@@ -131,6 +131,6 @@ file_name = "%s_%s.csv" % (str(time.strftime("%Y-%m-%d")),
                            str(time.strftime("%H%M%S")))
 columns = ["address", "city", "state", "zip", "price", "sqft", "bedrooms", 
            "bathrooms", "days_on_zillow", "sale_type", "url"]
-pd.DataFrame(output_data, columns = columns).to_csv(
+pd.DataFrame(output_data, columns = columns).drop_duplicates().to_csv(
     file_name, index = False, encoding = "UTF-8"
 )
