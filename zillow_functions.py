@@ -17,13 +17,13 @@ def zipcodes_list(st_items):
     # If st_items is a single zipcode string.
     if isinstance(st_items, str):
         zc_objects = zipcode.islike(st_items)
-        output = [str(i).split(" ", 1)[1].split(">")[0] for i in zc_objects]
     # If st_items is a list of zipcode strings.
     elif isinstance(st_items, list):
         zc_objects = [n for i in st_items for n in zipcode.islike(str(i))]
-        output = [str(i).split(" ", 1)[1].split(">")[0] for i in zc_objects]
     else:
         raise ValueError("arg 'st_items' must be of type str or list")
+    
+    output = [str(i).split(" ", 1)[1].split(">")[0] for i in zc_objects]
     return(output)
 
 def init_driver(file_path):
