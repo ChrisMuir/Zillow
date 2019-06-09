@@ -1,6 +1,13 @@
 Zillow Scraping with Python
 ===========================
 
+## ATTENTION:
+As of 2019, this code no longer works for most users. Zillow is now able to 
+detect the use of all/most automated webdrivers, and will display an 
+unlimited number of CAPTCHA's when the site is launched in a webdriver. 
+I have no interest in putting more work into this project, but am leaving 
+it up to serve as an example of how to webscrape using Selenium with Python.
+
 WARNING: Use this code at your own risk, scraping is against Zillow's TOC
 -------------------------------------------------------------------------
 
